@@ -1,0 +1,152 @@
+<!--_meta 作为公共模版分离出去-->
+<!DOCTYPE HTML>
+{% load static %}
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<link rel="Bookmark" href="/favicon.ico" >
+<link rel="Shortcut Icon" href="/favicon.ico" />
+<!--[if lt IE 9]>
+<script type="text/javascript" src="{% static '/lib/html5shiv.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/respond.min.js' %}"></script>
+<![endif]-->
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui/css/H-ui.min.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/H-ui.admin.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/lib/Hui-iconfont/1.0.8/iconfont.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/skin/default/skin.css' %}" id="skin" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/style.css' %}" />
+<!--[if IE 6]>
+<script type="text/javascript" src="{% static '/lib/DD_belatedPNG_0.0.8a-min.js'%}" ></script>
+<script>DD_belatedPNG.fix('*');</script>
+<![endif]-->
+<!--/meta 作为公共模版分离出去-->
+<style>
+    input[type="text"] {
+        width:99%;
+        display:block;
+        /*margin-left:10px; 可以调整距离外边框值*/
+        /*background-color:whitesmoke; 可以调整背景色*/
+    }
+
+    input[type="number"] {
+        width:99%;
+        display:block;
+        background-color:palegreen;
+    }
+
+    input[type="submit"] {
+        position: absolute;
+        right:50px;
+        margin-top:10px;
+        /*margin-left:10px; 可以调整距离外边框值*/
+        /*background-color:whitesmoke; 可以调整背景色*/
+    }
+
+    select{
+        width:99%;
+        /*display:block; margin-bottom:10px;background-color:whitesmoke;*/
+    }
+
+    label{
+        text-align: center;
+        margin-left:15px;
+    }
+
+    textarea{
+        width:99%;
+    }
+
+    th{
+        width:20%;
+        text-align: center;
+    }
+    td{
+        width:78%;
+    }
+
+</style>
+<title>EXCEL数据导入</title>
+</head>
+<body>
+<div class="page-container">
+        <form class="form form-horizontal" action="" method="post" enctype="multipart/form-data" >
+            {% csrf_token %}
+            <input type="file" name="my_excel" id="id_excelupload">
+            <input class="btn btn-primary radius"  type="submit" value="确认提交">
+        </form>
+</div>
+
+<!--_footer 作为公共模版分离出去-->
+<script type="text/javascript" src="{% static '/lib/jquery/1.9.1/jquery.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/layer/2.4/layer.js'%}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui/js/H-ui.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui.admin/js/H-ui.admin.js'%}"></script> <!--/_footer /作为公共模版分离出去-->
+
+<!--请在下方写此页面业务相关的脚本-->
+<script type="text/javascript" src="{% static '/lib/My97DatePicker/4.8/WdatePicker.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/jquery.validate.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/validate-methods.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/messages_zh.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/webuploader/0.1.5/webuploader.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/ueditor.config.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/ueditor.all.min.js'%}"> </script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/lang/zh-cn/zh-cn.js'%}"></script>
+<script type="text/javascript">
+//===================================================
+//无名函数，jquery响应页面操作，无名函数相当于初始后执行
+//===================================================
+$(function(){
+    //通过识别发起人信息核实是新建还是编辑
+    //if ($("#id_sender").val().length<1){
+        //alert("当前是新建，sender无值,设置默认值");
+       // $("#id_sender").val("新建无需填写");
+    //}
+});
+
+//===================================================
+//函数excelUpload,添加一个对象的函数处理
+//===================================================
+function excelUpload() {
+    //step1：为post数据提供一个csrfoken以通过验证,固定形式，不求甚解---------
+    alert("进入了相应");
+    var form_data = new FormData();
+    var file_info = $('#id_excelupload')[0].files[0];
+    form_data.append('file',file_info);
+    alert("完成了form_data准备");
+    var csrftoken = $.cookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    alert("完成了csrf准备");
+    //step2：使用post方法向一个url提交一组数据------------------------------
+    //ajax.post方法的三个参数：目标url，post数据,回调函数
+    $.post("../fltdata/excelin_aclist/",
+    {
+        form_data
+    },
+    function(data,status) {
+        //因为此处使用了editview，因此不会出现回调
+        alert("数据: \n" + data + "\n状态: " + status+"新记录创建成功！addArticle" );
+        alert("记录添加成功！ajax");
+        var index = parent.layer.getFrameIndex(window.name);
+        parent.$("#btn_refresh").click();
+        parent.layer.close(index);
+        removeIframe();//不必担心出错，因为如果关闭了图层，这一行不可能执行了
+    });
+}
+</script>
+<!--/请在上方写此页面业务相关的脚本-->
+</body>
+</html>

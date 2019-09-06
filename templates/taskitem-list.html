@@ -1,0 +1,454 @@
+﻿<!DOCTYPE HTML>
+<html>
+{% load static %}
+<!--20181123 对文件参考django规则进行改造 by 任昊 >
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<!--[if lt IE 9]>
+<script type="text/javascript" src="lib/html5shiv.js"></script>
+<script type="text/javascript" src="lib/respond.min.js"></script>
+<![endif]-->
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui/css/H-ui.min.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/H-ui.admin.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/lib/Hui-iconfont/1.0.8/iconfont.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/skin/default/skin.css' %}" id="skin" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/style.css' %}" />
+<!--[if IE 6]>
+<script type="text/javascript" src="{% static '/lib/DD_belatedPNG_0.0.8a-min.js'%}" ></script>
+<script>DD_belatedPNG.fix('*');</script>
+<![endif]-->
+<title>
+    {% if 0 == tasktype %} 生产管理待办任务
+    {% elif 1 == tasktype %} 值班领导改善项目
+    {% else %} 任务类型待定
+    {% endif %}
+</title>
+</head>
+<body>
+<nav class="breadcrumb"><i class="Hui-iconfont">&#xe6f3;</i>
+    {% if 0 == tasktype %} 生产管理待办任务
+    {% elif 1 == tasktype %} 值班领导改善项目
+    {% else %} 任务类型待定
+    {% endif %}
+    <button onclick="removeIframe()" class="btn btn-primary radius r"
+            style="line-height:1.6em;margin-top:3px;margin-right:30px">关闭选项卡</button>
+    <a onclick="selfrefresh()" class="btn btn-success radius r" id="btn_refresh"
+       style="line-height:1.6em;margin-top:3px;margin-right:30px" title="刷新" >
+        <i class="Hui-iconfont">&#xe68f;</i>
+    </a>
+</nav>
+<div class="page-container" id="listpage">
+<!--操作控件区：快速查询和筛选-------------------------------------------------------------------------->
+	<div class="text-l">
+	 <span class="select-box inline">
+		<select name="st_select123" id="st_select123" class="select" >
+			<option value="-9">状态筛选</option>
+			<option value="0">推进中</option>
+			<option value="1">已完成</option>
+            <option value="2">已取消</option>
+            <option value="3">已结束</option>
+            <option value="-3">未启动</option>
+		</select>
+		</span> 到期范围：
+		<input type="text" onfocus="WdatePicker({ maxDate:'#F{$dp.$D(\'logmax\')||\'%y-%M-%d\'}' })"
+               id="logmin" class="input-text Wdate" style="width:120px;">
+		-
+		<input type="text" onfocus="WdatePicker({ minDate:'#F{$dp.$D(\'logmin\')}' })"
+               id="logmax" class="input-text Wdate" style="width:120px;">
+		<input type="text" name="q_taskdesk" id="q_taskdesk" placeholder=" 任务描述" style="width:250px" class="input-text">
+		<button name="querybtn" id="querybtn" class="btn btn-success" type="button" onclick="querylist_some({{ tasktype }})">
+            <i class="Hui-iconfont">&#xe665;</i> 筛选</button>
+        <button name="allbtn" id="allbtn" class="btn btn-success" type="button" onclick="selfrefresh()"> 全选</button>
+        <button name="minebtn" id="minebtn" class="btn btn-success" type="button" onclick="querylist_mine({{ tasktype }})">
+            <i class="Hui-iconfont">&#xe665;</i> 筛选我的</button>
+        <button name="minebtn" id="minebtn" class="btn btn-warning radius" type="button" onclick="querylist_excelout({{ tasktype }})">
+            <i class="Hui-iconfont">&#xe640;</i> 导出清单</button>
+    </div>
+<!--操作控件区：针对任务的编辑操作-------------------------------------------------------------------------->
+	<div class="cl pd-5 bg-1 bk-gray mt-20">
+        <span class="l">
+            <a href="javascript:;" onclick="datadel()" class="btn btn-danger radius"><i class="Hui-iconfont">&#xe6e2;</i> 批量删除</a>
+            <!--20181205此处有两种添加记录的配置方法，一种是新建tab适用于连续添加，另一种是图层覆盖适于单个添加-->
+            <!--20190826删除了一个新tab方法-->
+            <a class="btn btn-primary radius" onClick="taskitem_add('项目添加',
+                    '{% if 0 == tasktype %} ../add/'+
+                    '{% elif 1 == tasktype %} ../add_mng/'+
+                    '{% else %} ../nofind/'+'{% endif %}')"
+               href="javascript:;" >
+                <i class="Hui-iconfont">&#xe600;</i>项目添加</a>
+        </span>
+        <span class="r">共有数据：<strong>{{ Mytasks.count }}</strong> 条</span> </div>
+	<div class="mt-20">
+		<table class="table table-border table-bordered table-bg table-hover table-sort table-responsive">
+			<thead>
+				<tr class="text-c">
+					<th width="25"><input type="checkbox" name="" value=""></th>
+					<th width="30">ID</th>
+					<th>任务描述(点击看详情和反馈)</th>
+					<th width="90">期限和状态</th>
+					<th width="120">监控人&参与人</th>
+					<th width="100">最后更新</th>
+                    <th width="60">反馈数</th>
+                    <th width="100">最后反馈</th>
+					<th width="90">操作</th>
+				</tr>
+			</thead>
+			<tbody id="listbody">
+            {% csrf_token %}
+            {% for mytask in Mytasks %}
+                <tr class="text-c">
+					<td><input type="checkbox" value="" name=""></td>
+					<td>{{ mytask.id }}</td>
+					<td class="text-l">
+                        <!--跳转方式：data-title="任务查看和反馈" data-href="../taskmng/task_feedback/?id={{ mytask.id }}" onclick="Hui_admin_tab(this)"-->
+                        <!--覆盖方式：onClick="task_feedback('任务查看和反馈','../task_feedback/?id={{ mytask.id }}',{{ mytask.id }})" title="查看和反馈">-->
+                        <u style="cursor:pointer" class="text-primary" data-title="进展更新和反馈TY{{ tasktype }}ID{{ mytask.id }}" data-href="../taskmng/task_feedback/?id={{ mytask.id }}&type={{ tasktype }}" onclick="Hui_admin_tab(this)" title="备注说明：{{ mytask.abstract }}">{{mytask.taskdesc}}</u></td>
+					<td>{{mytask.due_date}} <span
+                            {% if 0 == mytask.task_status %} class="label label-primary radius"
+                            {% elif 1 == mytask.task_status %} class="label label-success radius"
+                            {% elif 2 == mytask.task_status %} class="label radius"
+                            {% else %}class="label label-default radius" {% endif %}>
+                        {{mytask.get_task_status_display}}</span></td>
+					<td>
+                        {{ mytask.sender }} &
+                        {% for myperson in mytask.refperson.all %}
+                            {{myperson.first_name}}
+                            {{myperson.last_name}},
+                        {% endfor %}
+                    </td>
+					<td>{{mytask.update_time}} by {{mytask.editby.first_name}}{{mytask.editby.last_name}}</td>
+                    <td>
+                        {% if 0 == tasktype %}
+                            {{mytask.taskfeedbacks_set.count}}
+                        {% elif 1 == tasktype %}
+                            {{mytask.taskfeedbacks_mng_set.count}}
+                        {% else %}
+                            类型异常
+                        {% endif %}
+
+                    </td>
+					<td>
+                        {% if 0 == tasktype %}
+                            {% for mytfb in mytask.taskfeedbacks_set.all %}
+                            {% if forloop.revcounter0 == 0  %}
+                                {{mytfb.update_time}} by
+                                {{mytfb.editby.first_name}}
+                                {{mytfb.editby.last_name}}
+                            {% endif %}
+                            {% endfor %}
+                        {% elif 1 == tasktype %}
+                            {% for mytfb in mytask.taskfeedbacks_mng_set.all %}
+                            {% if forloop.revcounter0 == 0  %}
+                                {{mytfb.update_time}} by
+                                {{mytfb.editby.first_name}}
+                                {{mytfb.editby.last_name}}
+                            {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            类型异常
+                        {% endif %}
+                    </td>
+                    <td class="f-14 td-manage">
+                        {% csrf_token %}
+                        <!--修改：20190722修改，启用了基于view函数的新方法修改任务参与人-->
+                        <!--a style="text-decoration:none" class="ml-5" onClick="taskitem_edit('编辑任务参与人','../refedit/{{ mytask.id }}/',{{ mytask.id }})" href="javascript:;" title="参与人"><i class="Hui-iconfont">&#xe62b;</i></a-->
+                        {% if mytask.sender == myself or myself == 'all' %}
+                        <a style="text-decoration:none" class="ml-5" onClick="taskitem_edit('项目编辑','../' +
+                                '{% if 0 == tasktype %}edit/'+
+                                '{% elif 1 == tasktype %}edit_mng/'+
+                                '{% else %}nofind/'+'{% endif %}'
+                                +'{{ mytask.id }}/',{{ mytask.id }})" href="javascript:;" title="编辑"><i class="Hui-iconfont">&#xe6df;</i></a>
+                        <a style="text-decoration:none" class="ml-5" onClick="taskitem_del(this,{{ mytask.id }},{{ tasktype }})" href="javascript:;" title="删除"><i class="Hui-iconfont">&#xe6e2;</i></a>
+                        <a style="text-decoration:none" class="ml-5" onClick="taskitem_edit('项目参与人','../refedit/?id={{ mytask.id }}&type={{ tasktype }}',{{ mytask.id }})" href="javascript:;" title="调整参与人"><i class="Hui-iconfont">&#xe62b;</i></a>
+                        {% else %} 管理员和监控人有权编辑
+                        {% endif %}
+                        {% if myself == 'all' %}
+                            <a style="text-decoration:none" class="ml-5" onClick="taskitem_edit('项目跟踪人','../mntedit/?id={{ mytask.id }}&type={{ tasktype }}',{{ mytask.id }})" href="javascript:;" title="变更负责人"><i class="Hui-iconfont">&#xe62d;</i></a>
+                        {% endif %}
+                    </td>
+				</tr>
+            {% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+<!--_footer 作为公共模版分离出去-->
+<script type="text/javascript" src="{% static '/lib/jquery/1.9.1/jquery.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/layer/2.4/layer.js' %}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui/js/H-ui.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui.admin/js/H-ui.admin.js' %}"></script> <!--/_footer 作为公共模版分离出去-->
+
+<!--请在下方写此页面业务相关的脚本-->
+<script type="text/javascript" src="{% static '/lib/My97DatePicker/4.8/WdatePicker.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/datatables/1.10.0/jquery.dataTables.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/laypage/1.2/laypage.js' %}"></script>
+<script type="text/javascript">
+/*========================================================
+//实现列的排序操作响应，jquery方法
+*///======================================================
+$('.table-sort').dataTable({
+	"aaSorting": [[ 1, "desc" ]],//默认第几个排序
+	"bStateSave": true,//状态保存
+	"pading":false,
+	"aoColumnDefs": [
+	  //{"bVisible": false, "aTargets": [ 3 ]} //控制列的隐藏显示
+	  {"orderable":false,"aTargets":[0,8]}// 不参与排序的列
+	]
+});
+
+/*=================================================================
+//任务-反馈,实际上是通用的函数，层覆盖调用新页面
+//layer.open+layer.full实现，应该是hui框架的功能
+*///===============================================================
+function task_feedback(title,url,id,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+/*任务-添加*/
+function taskitem_add(title,url,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+/*任务-编辑*/
+function taskitem_edit(title,url,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+/*基础-页面刷新*/
+function selfrefresh() {
+    location.replace(location.href);
+}
+
+/*==============================================================================
+//筛选清单目前方法仍然是通过ajax向服务器提交
+//myid实际传输的是项目的类型编号~~~~~~~
+*///============================================================================
+function querylist_some(myid) {
+    //注意，使用$选择器时，属性需要带括号，使用document.getElementById不带括号;
+    var mystselect = document.getElementById("st_select123");
+    var mysd = mystselect.selectedIndex;
+    var mytype=mystselect.options[mysd].value;
+    var mytype2=mystselect.options[mysd].text;
+    var mydatemin=document.getElementById("logmin").value;
+    var mydatemax=document.getElementById("logmax").value;
+    var myqdesc=document.getElementById("q_taskdesk").value;
+    //alert("myid="+myid+"当前选择的状态值="+mytype+"："+mytype2+",日期范围是="+mydatemin+"至"+mydatemax+",描述关键字为:"+myqdesc+"暂时调试到这里");
+    //以下是向服务器提交请求和处理返回数据的过程
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../listquery/",
+            {
+                "qid":myid,
+                "qtype":mytype,
+                "qdmin":mydatemin,
+                "qdmax":mydatemax,
+                "qdesc":myqdesc
+            },
+            function(data,status) {
+                if ("success"==status){
+                    //alert("服务器反馈：\n"+data+'\n'+"回调状态成功！");
+                    $("#listpage").html(data);
+                    layer.msg('待办任务筛选成功~~',{icon: 6,time:3000});
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+/*==============================================================================
+//筛选我的任务清单
+*///============================================================================
+function querylist_mine(myid) {
+    //注意，使用$选择器时，属性需要带括号，使用document.getElementById不带括号;
+    var mystselect = document.getElementById("st_select123");
+    var mysd = mystselect.selectedIndex;
+    var mytype=mystselect.options[mysd].value;
+    var mytype2=mystselect.options[mysd].text;
+    var mydatemin=document.getElementById("logmin").value;
+    var mydatemax=document.getElementById("logmax").value;
+    var myqdesc=document.getElementById("q_taskdesk").value;
+    //alert("myid="+myid+"当前选择我的任务");
+    //以下是向服务器提交请求和处理返回数据的过程
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../listmine/",
+            {
+                "qid":myid,
+                "qtype":mytype,
+                "qdmin":mydatemin,
+                "qdmax":mydatemax,
+                "qdesc":myqdesc
+            },
+            function(data,status) {
+                if ("success"==status){
+                    //alert("服务器反馈：\n"+data+'\n'+"回调状态成功！");
+                    //$("#listpage").html(data);
+                    layer.msg('您的待办任务已完成筛选~~',{icon: 6,time:3000});
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+/*==============================================================================
+//筛选我的任务清单
+//============================================================================*/
+function test_newfun(obj,myid) {
+    //alert("当前测试目的为核实当前用户是否已参与了本任务");
+    //以下是向服务器提交请求和处理返回数据的过程
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../newtest/",
+            {
+                "tid":myid,
+            },
+            function(data,status) {
+                if ("success"==status){
+                    alert("服务器反馈：\n"+data+'\n'+"回调成功！");
+                    if (data==1){
+                        alert("您参加了此项任务");
+                        task_feedback('任务查看和反馈','../task_feedback/?id='+myid,myid);
+                    }
+                    else alert("您为参与此项任务，不能进入反馈页面！");
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+/*==============================================================================
+//筛选我的任务清单
+*///============================================================================
+function querylist_excelout(myid) {
+    //注意，使用$选择器时，属性需要带括号，使用document.getElementById不带括号;
+    var mystselect = document.getElementById("st_select123");
+    var mysd = mystselect.selectedIndex;
+    var mytype=mystselect.options[mysd].value;
+    var mytype2=mystselect.options[mysd].text;
+    var mydatemin=document.getElementById("logmin").value;
+    var mydatemax=document.getElementById("logmax").value;
+    var myqdesc=document.getElementById("q_taskdesk").value;
+    //alert("myid="+myid+"当前选择我的任务");
+    //以下是向服务器提交请求和处理返回数据的过程
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../listexcel/",
+            {
+                "qid":myid,
+                "qtype":mytype,
+                "qdmin":mydatemin,
+                "qdmax":mydatemax,
+                "qdesc":myqdesc
+            },
+            function(data,status) {
+                if ("success"==status){
+                    //alert("服务器反馈：\n"+data+'\n'+"回调状态成功！");
+                    //$("#listpage").html(data);
+                    alert(data);
+                    layer.msg('导出文件已生成~~',{icon: 6,time:3000});
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+/*==============================================================================
+//任务-删除,目前方法仍然是通过ajax向服务器提交，未用deleteview
+//20190904添加了mytype参数，实现多个类型任务的删除
+*///============================================================================
+function taskitem_del(obj,myid,mytype){
+    if (confirm("确认删除吗？")) {
+        var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../del/",
+            {
+                "aid":myid,
+                "tty":mytype
+            },
+            function(data,status) {
+                if ("success"==status){
+                    if("1"==data){
+                        //alert("服务器消息"+data+'\n'+"记录删除成功！");
+                        $(obj).parents("tr").remove();
+		                layer.msg('记录删除成功，建议您将列表页面进行刷新~~',{icon: 6,time:4000});
+                    }
+                    else if("0"==data) {
+                        alert("服务器消息"+data+'\n'+"您没有删除任务的权限！");
+                    }
+                    else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+    }
+    else layer.msg('您已放弃此次删除!',{icon: 6,time:3000});
+}
+
+
+</script> 
+</body>
+</html>

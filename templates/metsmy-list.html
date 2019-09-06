@@ -1,0 +1,358 @@
+﻿<!DOCTYPE HTML>
+<html>
+{% load static %}
+<!--20181123 对文件参考django规则进行改造 by 任昊 >
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<!--[if lt IE 9]>
+<script type="text/javascript" src="lib/html5shiv.js"></script>
+<script type="text/javascript" src="lib/respond.min.js"></script>
+<![endif]-->
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui/css/H-ui.min.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/H-ui.admin.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/lib/Hui-iconfont/1.0.8/iconfont.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/skin/default/skin.css' %}" id="skin" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/style.css' %}" />
+<!--[if IE 6]>
+<script type="text/javascript" src="{% static '/lib/DD_belatedPNG_0.0.8a-min.js'%}" ></script>
+<script>DD_belatedPNG.fix('*');</script>
+<![endif]-->
+<title>{{ Myhead }}</title>
+</head>
+<body>
+<nav class="breadcrumb"><i class="Hui-iconfont">&#xe6f3;</i>  {{ Myhead }}
+    <button onclick="removeIframe()" class="btn btn-primary radius r"
+            style="line-height:1.6em;margin-top:3px;margin-right:30px">关闭选项卡</button>
+    <a onclick="selfrefresh()" class="btn btn-success radius r" id="btn_refresh"
+       style="line-height:1.6em;margin-top:3px;margin-right:30px" title="刷新" >
+        <i class="Hui-iconfont">&#xe68f;</i>
+    </a>
+</nav>
+<div class="page-container" id="listpage">
+<!--操作控件区：快速查询和筛选-------------------------------------------------------------------------->
+	<div class="text-l">
+	 <span class="select-box inline">
+		<select name="st_select123" id="st_select123" class="select" >
+			<option value="-9">类型筛选</option>
+			<option value="0">周例会</option>
+			<option value="1">专题会</option>
+		</select>
+		</span> 会议日期：
+		<input type="text" onfocus="WdatePicker({ maxDate:'#F{$dp.$D(\'logmax\')||\'%y-%M-%d\'}' })"
+               id="logmin" class="input-text Wdate" style="width:120px;">
+		-
+		<input type="text" onfocus="WdatePicker({ minDate:'#F{$dp.$D(\'logmin\')}' })"
+               id="logmax" class="input-text Wdate" style="width:120px;">
+		<input type="text" name="q_taskdesk" id="q_taskdesk" placeholder=" 会议标题描述" style="width:250px" class="input-text">
+		<button name="querybtn" id="querybtn" class="btn btn-success" type="button" onclick="querylist_some(1)">
+            <i class="Hui-iconfont">&#xe665;</i> 筛选</button>
+        <button name="allbtn" id="allbtn" class="btn btn-success" type="button" onclick="selfrefresh()"> 全选</button>
+    </div>
+<!--操作控件区：针对任务的编辑操作-------------------------------------------------------------------------->
+	<div class="cl pd-5 bg-1 bk-gray mt-20">
+        <span class="l">
+            <a class="btn btn-primary radius" onClick="taskitem_add('会议纪要添加','../{{ mytit }}add/')" href="javascript:;" >
+                <i class="Hui-iconfont">&#xe600;</i>添加会议纪要</a>
+        </span>
+        <span class="r">共有数据：<strong>{{ meets.count }}</strong> 条</span> </div>
+	<div class="mt-20">
+		<table class="table table-border table-bordered table-bg table-hover table-sort table-responsive">
+			<thead>
+				<tr class="text-c">
+					<th width="25"><input type="checkbox" name="" value=""></th>
+					<th width="30">ID</th>
+					<th>会议主题描述</th>
+                    <th width="80">会议号</th>
+					<th width="80">会议日期</th>
+					<th width="80">主持&记录</th>
+                    <th width="60">会议类型</th>
+					<th width="90">更新时间</th>
+                    <th width="60">更新人</th>
+                    <th width="40">纪要</th>
+					<th width="90">操作</th>
+				</tr>
+			</thead>
+			<tbody id="listbody">
+            {% csrf_token %}
+            {% for mytask in meets %}
+                <tr class="text-c">
+					<td><input type="checkbox" value="" name=""></td>
+					<td>{{ mytask.id }}</td>
+					<td class="text-l">
+                        <!--跳转方式：data-title="任务查看和反馈" data-href="../taskmng/task_feedback/?id={{ mytask.id }}" onclick="Hui_admin_tab(this)"-->
+                        <!--覆盖方式：onClick="task_feedback('任务查看和反馈','../task_feedback/?id={{ mytask.id }}',{{ mytask.id }})" title="查看和反馈">-->
+                        {% if mytask.meetfile %}
+                        <u style="cursor:pointer" class="text-primary" onClick="see_metfile(this,'{{ mytask.meetfile.filename }}',{{ mytask.id }})" title="点击查看纪要文件2">{{mytask.title}}</u>
+                        {% else %}{{mytask.title}}
+                        {% endif %}
+                    </td>
+					<td>{{mytask.meetcode}}</td>
+                    <td>{{mytask.meetdate}}</td>
+                    <td>{{mytask.moderator}} , {{mytask.recorder}}</td>
+                    <td><span class="label label-success radius">
+                        {{mytask.get_meettype_display}}</span></td>
+					<td>{{mytask.edittime}}</td>
+                    <td>{{mytask.editby.first_name}}{{mytask.editby.last_name}}</td>
+					<td class="td-status"><span class="label label-success radius">
+                        {% if mytask.meetfile %}已提交{% else %}待提交
+                            <a style="text-decoration:none" class="ml-5" onClick="uplfile_ppc(this,{{ mytask.id }})"
+                               href="javascript:;" title="纪要文件提交"><i class="Hui-iconfont">&#xe62e;</i></a>
+                        {% endif %}
+                    </span></td>
+					<td class="f-14 td-manage">
+                        {% csrf_token %}
+                        <a style="text-decoration:none" class="ml-5" onClick="taskitem_edit('会议纪要编辑','../{{ mytit }}edit/{{ mytask.id }}/',{{ mytask.id }})" href="javascript:;" title="编辑"><i class="Hui-iconfont">&#xe6df;</i></a>
+                        <a style="text-decoration:none" class="ml-5" onClick="taskitem_del(this,{{ mytask.id }})" href="javascript:;" title="删除"><i class="Hui-iconfont">&#xe6e2;</i></a>
+                        <a style="text-decoration:none" class="ml-5" onClick="meet_reads('会议纪要已读状态查看','../{{ mytit }}seeread/?id={{ mytask.id }}',{{ mytask.id }})" href="javascript:;" title="查看已读情况"><i class="Hui-iconfont">&#xe62e;</i></a>
+                    </td>
+				</tr>
+            {% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+<!--_footer 作为公共模版分离出去-->
+<script type="text/javascript" src="{% static '/lib/jquery/1.9.1/jquery.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/layer/2.4/layer.js' %}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui/js/H-ui.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui.admin/js/H-ui.admin.js' %}"></script> <!--/_footer 作为公共模版分离出去-->
+
+<!--请在下方写此页面业务相关的脚本-->
+<script type="text/javascript" src="{% static '/lib/My97DatePicker/4.8/WdatePicker.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/datatables/1.10.0/jquery.dataTables.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/laypage/1.2/laypage.js' %}"></script>
+<script type="text/javascript">
+/*========================================================
+//实现列的排序操作响应，jquery方法
+*///======================================================
+$('.table-sort').dataTable({
+	"aaSorting": [[ 1, "desc" ]],//默认第几个排序
+	"bStateSave": true,//状态保存
+	"pading":false,
+	"aoColumnDefs": [
+	  //{"bVisible": false, "aTargets": [ 3 ]} //控制列的隐藏显示
+	  {"orderable":false,"aTargets":[0,8]}// 不参与排序的列
+	]
+});
+
+/*=================================================================
+//查看已读标记信息,实际上是通用的函数，层覆盖调用新页面
+//layer.open+layer.full实现，应该是hui框架的功能
+*///===============================================================
+function meet_reads(title,url,id,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+/*任务-添加*/
+function taskitem_add(title,url,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+/*任务-编辑*/
+function taskitem_edit(title,url,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+/*基础-页面刷新*/
+function selfrefresh() {
+    location.replace(location.href);
+}
+
+/*==============================================================================
+//筛选清单目前方法仍然是通过ajax向服务器提交
+*///============================================================================
+function querylist_some(myid) {
+    //注意，使用$选择器时，属性需要带括号，使用document.getElementById不带括号;
+    var mystselect = document.getElementById("st_select123");
+    var mysd = mystselect.selectedIndex;
+    var mytype=mystselect.options[mysd].value;
+    var mydatemin=document.getElementById("logmin").value;
+    var mydatemax=document.getElementById("logmax").value;
+    var myqdesc=document.getElementById("q_taskdesk").value;
+    //alert("myid="+myid+"当前选择的状态值="+mytype+"："+mytype2+",日期范围是="+mydatemin+"至"+mydatemax+",描述关键字为:"+myqdesc+"暂时调试到这里");
+    //以下是向服务器提交请求和处理返回数据的过程
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../{{ mytit }}listquery/",
+            {
+                "qid":myid,
+                "qtype":mytype,
+                "qdmin":mydatemin,
+                "qdmax":mydatemax,
+                "qdesc":myqdesc
+            },
+            function(data,status) {
+                if ("success"==status){
+                    //alert("服务器反馈：\n"+data+'\n'+"回调状态成功！");
+                    $("#listpage").html(data);
+                    layer.msg('筛选成功~~',{icon: 6,time:3000});
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+/*==============================================================================
+//删除会议纪要,目前方法仍然是通过ajax向服务器提交，未用deleteview 20170729完成调试
+*///============================================================================
+function taskitem_del(obj,myid){
+    if (confirm("确认删除吗？")) {
+        var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../{{ mytit }}del/",
+            {
+                "aid":myid
+            },
+            function(data,status) {
+                if ("success"==status){
+                    if("1"==data){
+                        alert("服务器消息"+data+'\n'+"记录删除成功！");
+                        $(obj).parents("tr").remove();
+		                layer.msg('记录删除成功，建议您将列表页面进行刷新~~',{icon: 6,time:3000});
+                    }
+                    else {
+                        alert("服务器消息"+data+'\n'+"您没有删除会议纪要的权限！");
+                    }
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+    }
+    else layer.msg('您已放弃此次删除!',{icon: 6,time:3000});
+}
+
+
+/*==============================================================================
+//给会议纪要添加参考文件，20190729 by sicksnail
+*///============================================================================
+function adduplfile_ppc(title,url,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+function uplfile_ppc(obj,myid) {
+    //注意，使用$选择器时，属性需要带括号，使用document.getElementById不带括号;
+    //var mystselect = document.getElementById("st_select123");
+    //var mysd = mystselect.selectedIndex;
+    //var mydatemin=document.getElementById("logmin").value;
+    var mymodel="METSMY_ppc";
+    //以下是向服务器提交请求和处理返回数据的过程
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../{{ mytit }}checkfile/",
+            {
+                "qid":myid,
+                "qmodel":mymodel
+            },
+            function(data,status) {
+                if ("success"==status){
+                    if("1"==data){
+                        alert("服务器消息"+data+'\n'+"已经上传了会议纪要文件！");
+                        $(obj).parents("td").html("<span class=\"label label-success radius\">已提交</span>");
+		                layer.msg('会议纪要已提交，请刷新页面后尝试~~',{icon: 6,time:3000});
+                    }
+                    else if ("0"==data) {
+                        adduplfile_ppc('会议纪要添加','../../filemng/rfadd/?id='+myid+'&model=METSMY_ppc');
+                    }
+                    else {
+                        alert("服务器消息"+data+'\n'+"执行此操作需要具备跟更新会议纪要的权限，您无此权限！");
+                    }
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+/*==============================================================================
+//查看会议纪要相关文件，并在开始核实是否标记为自己已读
+*///============================================================================
+function see_metfile(obj,myfile,myid){
+    if (confirm("需要设置已读标记码？")) {
+        var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../{{ mytit }}setread/",
+            {
+                "aid":myid //aid传递的是会议纪要记录id
+            },
+            function(data,status) {
+                if ("success"==status){
+                    if("0"==data){
+                        //alert("服务器消息"+data+'\n'+"记录删除成功！");
+                        //$(obj).parents("tr").remove();
+		                layer.msg('您已成功设置本会议纪要的已读标记~~',{icon: 6,time:3000});
+                    }
+                    else {
+                        alert("服务器消息"+data+'\n'+"已读标记已设置过，无需重复设置！");
+                    }
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+    }
+    else layer.msg('您已放弃设置已读标记!',{icon: 6,time:3000});
+
+    meet_reads('查看会议纪要','../../filemng/dlreff/?filename='+myfile,myid);
+}
+
+</script> 
+</body>
+</html>

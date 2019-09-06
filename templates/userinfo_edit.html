@@ -1,0 +1,235 @@
+<!DOCTYPE HTML>
+<html>
+{% load static %}
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<!--[if lt IE 9]>
+<script type="text/javascript" src="{% static '/lib/html5shiv.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/respond.min.js'%}"></script>
+<![endif]-->
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui/css/H-ui.min.css'%}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/H-ui.admin.css'%}" />
+<link rel="stylesheet" type="text/css" href="{% static '/lib/Hui-iconfont/1.0.8/iconfont.css'%}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/skin/default/skin.css'%}" id="skin" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/style.css'%}" />
+<!--[if IE 6]>
+<script type="text/javascript" src="{% static '/lib/DD_belatedPNG_0.0.8a-min.js'%}" ></script>
+<script>DD_belatedPNG.fix('*');</script>
+<![endif]-->
+<title>调整用户信息</title>
+</head>
+<body>
+<article class="page-container">
+	<form class="form form-horizontal" id="form-admin-add">
+        {% csrf_token %}
+	<div class="row cl">
+		<label class="form-label col-xs-4 col-sm-3"><span class="c-red">*</span>用户名：</label>
+		<div class="formControls col-xs-8 col-sm-9">
+			<input type="text" class="input-text" value="{{ myinfo.username }}" placeholder="" id="adminName" name="adminName">
+		</div>
+	</div>
+    <div class="row cl">
+		<label class="form-label col-xs-4 col-sm-3"><span class="c-red">*</span>姓：</label>
+		<div class="formControls col-xs-8 col-sm-9">
+			<input type="text" class="input-text" value="{{ myinfo.first_name }}" placeholder="" id="first_name" name="first_name">
+		</div>
+	</div>
+    <div class="row cl">
+		<label class="form-label col-xs-4 col-sm-3"><span class="c-red">*</span>名：</label>
+		<div class="formControls col-xs-8 col-sm-9">
+			<input type="text" class="input-text" value="{{ myinfo.last_name }}" placeholder="" id="last_name" name="last_name">
+		</div>
+	</div>
+	<div class="row cl">
+		<label class="form-label col-xs-4 col-sm-3"><span class="c-red">*</span>性别：</label>
+		<div class="formControls col-xs-8 col-sm-9 skin-minimal">
+			<div class="radio-box">
+				<input name="sex" type="radio" id="sex-1" checked>
+				<label for="sex-1">男</label>
+			</div>
+			<div class="radio-box">
+				<input type="radio" id="sex-2" name="sex">
+				<label for="sex-2">女</label>
+			</div>
+		</div>
+	</div>
+	<div class="row cl">
+		<label class="form-label col-xs-4 col-sm-3"><span class="c-red">*</span>邮箱：</label>
+		<div class="formControls col-xs-8 col-sm-9">
+			<input type="text" class="input-text" placeholder="@" name="email" id="email" value="{{ myinfo.email }}">
+		</div>
+	</div>
+    <div class="row cl">
+		<label class="form-label col-xs-4 col-sm-3"><span class="c-red">*</span>原密码：</label>
+		<div class="formControls col-xs-8 col-sm-9">
+			<input type="password" class="input-text" autocomplete="off" value="" placeholder="密码" id="password" name="password">
+		</div>
+	</div>
+    <div class="row cl">
+		<label class="form-label col-xs-4 col-sm-3"><span class="c-red">*</span>新密码：</label>
+		<div class="formControls col-xs-8 col-sm-9">
+			<input type="password" class="input-text" autocomplete="off"  placeholder="输入新密码" id="password1" name="password1">
+		</div>
+	</div>
+	<div class="row cl">
+		<label class="form-label col-xs-4 col-sm-3"><span class="c-red">*</span>确认新密码：</label>
+		<div class="formControls col-xs-8 col-sm-9">
+			<input type="password" class="input-text" autocomplete="off"  placeholder="确认新密码" id="password2" name="password2">
+		</div>
+	</div>
+	<div class="row cl">
+		<div class="col-xs-8 col-sm-9 col-xs-offset-4 col-sm-offset-3">
+			<input class="btn btn-primary radius" type="submit" value="&nbsp;&nbsp;修改信息 &nbsp;&nbsp;">
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <button name="pswchgbtn" id="pswchgbtn" class="btn btn-success" type="button"
+                    onclick="passwordchg()"> 修改密码</button>
+		</div>
+	</div>
+	</form>
+</article>
+
+<!--_footer 作为公共模版分离出去-->
+
+<script type="text/javascript" src="{% static '/lib/jquery/1.9.1/jquery.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/layer/2.4/layer.js'%}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui/js/H-ui.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui.admin/js/H-ui.admin.js'%}"></script>
+<!--/_footer /作为公共模版分离出去-->
+
+<!--请在下方写此页面业务相关的脚本-->
+<script type="text/javascript" src="{% static '/lib/My97DatePicker/4.8/WdatePicker.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/jquery.validate.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/validate-methods.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/messages_zh.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/webuploader/0.1.5/webuploader.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/ueditor.config.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/ueditor.all.min.js'%}"> </script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/lang/zh-cn/zh-cn.js'%}"></script>
+<script type="text/javascript">
+$(function(){
+	$('.skin-minimal input').iCheck({
+		checkboxClass: 'icheckbox-blue',
+		radioClass: 'iradio-blue',
+		increaseArea: '20%'
+	});
+	
+	$("#form-admin-add").validate({
+		rules:{
+			adminName:{
+				required:true,
+				minlength:4,
+				maxlength:16
+			},
+			sex:{
+				required:true,
+			},
+			email:{
+				required:true,
+				email:true,
+			},
+		},
+		onkeyup:false,
+		focusCleanup:true,
+		success:"valid",
+        submitHandler:function(form){
+			$(form).ajaxSubmit({
+				type: 'post',
+				url: "../userinfoedit/" ,
+				success: function(data){
+				    layer.msg('用户信息更新成功!',{icon:1,time:5000});
+				    //layer_close();使用该方法后导致过早关闭
+				},
+                error: function(XmlHttpRequest, textStatus, errorThrown){
+				    layer.msg('error!',{icon:1,time:3000});
+				}
+			});
+			//var index = parent.layer.getFrameIndex(window.name);
+			//parent.$('.btn-refresh').click();
+			//parent.layer.close(index);
+			//userinfochg();这是另一种方法实现
+		}
+	});
+});
+
+//=================================================================
+//功能函数，修订用户信息，与$("#form-admin-add").validate为备选
+//editby 任昊 20190712
+//=================================================================
+function userinfochg() {
+    var csrftoken = $.cookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.post("../userinfoedit/",
+    {
+        "first_name": $("#first_name").val(),
+        "last_name": $("#last_name").val(),
+        "email": $("#email").val(),
+    },
+    function(data,status) {
+                if ("success"==status){
+                    //alert("服务器反馈：\n"+data+'\n'+"回调状态成功！");
+                    //$("#listpage").html(data);
+                    layer.msg('个人信息更新成功！',{icon: 6,time:3000});
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+//=================================================================
+//功能函数，修订用户信息，与$("#form-admin-add").validate为备选
+//editby 任昊 20190712
+//=================================================================
+function passwordchg() {
+    var mypw1=document.getElementById("password1").value;
+    var mypw2=document.getElementById("password2").value;
+    if (mypw1 != mypw2 ){
+        alert('新密码与确认密码不一致！');
+        return;
+    }
+    var csrftoken = $.cookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.post("../password_chg/",
+    {
+        "password": $("#password").val(),
+        "password2": $("#password2").val(),
+    },
+    function(data) {
+        layer.msg(data.status+':'+data.msg,{icon: 6,time:3000});
+                //下面的表达也能实现，但是太复杂了
+                //if ("success"==data.status){
+                //    alert("服务器反馈：\n"+data.msg+'\n'+"回调成功！");
+                //   layer.msg('个人密码更新成功！',{icon: 6,time:3000});
+                //}
+                //else {
+                //    alert("服务器反馈：\n"+data.msg+'\n'+"回调成功！");
+                //    layer.msg('个人密码更新失败！',{icon: 6,time:3000});
+                //}
+    });
+}
+</script> 
+<!--/请在上方写此页面业务相关的脚本-->
+</body>
+</html>

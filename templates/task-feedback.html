@@ -1,0 +1,317 @@
+<!--_meta 作为公共模版分离出去-->
+<!DOCTYPE HTML>
+<html>
+{% load static %}
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<link rel="Bookmark" href="/favicon.ico" >
+<link rel="Shortcut Icon" href="/favicon.ico" />
+<!--[if lt IE 9]>
+<script type="text/javascript" src="{% static '/lib/html5shiv.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/respond.min.js' %}"></script>
+<![endif]-->
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui/css/H-ui.min.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/H-ui.admin.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/lib/Hui-iconfont/1.0.8/iconfont.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/skin/default/skin.css' %}" id="skin" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/style.css' %}" />
+<!--[if IE 6]>
+<script type="text/javascript" src="{% static '/lib/DD_belatedPNG_0.0.8a-min.js'%}" ></script>
+<script>DD_belatedPNG.fix('*');</script>
+<![endif]-->
+<!--/meta 作为公共模版分离出去-->
+
+<title>任务查看和反馈 sicksnail 20190108</title>
+<meta name="keywords" content="H-ui.admin v3.1,H-ui网站后台模版,后台模版下载,后台管理系统模版,HTML后台模版下载">
+<meta name="description" content="H-ui.admin v3.1，是一款由国人开发的轻量级扁平化网站后台模板，完全免费开源的网站后台管理系统模版，适合中小型CMS后台系统。">
+</head>
+<body>
+<nav class="breadcrumb"><i class="Hui-iconfont">&#xe623;</i> 任务详情查看和反馈
+    <a class="btn btn-success radius r" id="btn_refresh" style="line-height:1.6em;margin-top:3px" onclick="selfrefresh()" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+<mytask class="page-container">
+	<form class="form form-horizontal" id="form-article-add" action="" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="id" id="id" value="{{ mytask.id }}">
+		<div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2  col-md-2">任务标题(只读)：</label>
+			<div class="formControls col-xs-8 col-sm-9  col-md-8">
+				<input type="text" class="input-text" placeholder="" id="taskdesc"
+                       name="taskdesc" value="{{ mytask.taskdesc }}" readonly="true">
+			</div>
+		</div>
+
+		<div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2 col-md-2">完成期限(只读)：</label>
+			<div class="formControls col-xs-8 col-sm-9 col-md-3">
+			    <input type="text" class="input-text"  placeholder="" id="thedue"
+                       name="thedue" value="{{ mytask.due_date }}"  readonly="true">
+            </div>
+            <label class="form-label col-xs-4 col-sm-2 col-md-2">任务状态(只读)：</label>
+			<div class="formControls col-xs-8 col-sm-9 col-md-3">
+			    <input type="text" class="input-text"  placeholder="" id="task_status"
+                       name="task_status" value="{{ mytask.get_task_status_display }}" readonly="true">
+            </div>
+		</div>
+
+		<div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2  col-md-2"><span class="c-red">*</span>进展详述：</label>
+			<div class="formControls col-xs-8 col-sm-9  col-md-8">
+				<textarea name="taskabstract" id="taskabstract" cols="" rows="" class="textarea"  datatype="*10-100" dragonfly="true"
+                          placeholder="说点什么...最少输入10个字符" nullmsg="备注不能为空！"  >{{ mytask.abstract }}</textarea>
+				<p class="textarea-numberbar"><em class="textarea-length">0</em>/200</p>
+			</div>
+		</div>
+        <div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2  col-md-2">参与人员(只读)：</label>
+			<div class="formControls col-xs-8 col-sm-9  col-md-8">
+				<input type="text" class="input-text" placeholder="" id="taskdesc"
+                       name="taskdesc" value="{{ mytkrf }}" readonly="true">
+			</div>
+		</div>
+	</form>
+</mytask>
+
+<div class="page-container">
+    <div class="mt-5">
+        <div  class="bk-gray radius">
+            <span class="r">
+                {% if mytask.sender == myname or myname == 'super' %}
+                    <input class="btn radius btn-secondary" type="button" value="更新进展"
+                       onClick="note_change(this,{{ mytask.id }},{{ mytasktype }})" href="javascript:;">
+                {% endif %}
+                <a class="btn btn-primary radius" onClick="taskfb_add(this,{{ mytask.id }})" href="javascript:;" >
+                    <i class="Hui-iconfont">&#xe600;</i>添加反馈</a>
+                <!--taskfb_add('添加反馈','../fbadd/?id=')这是直接参与反馈的调用方法-->
+            </span>
+            <span class="l">
+               <p class="c-primary f-24 ">本任务的反馈共有 <strong>{{myfeedbacks.count}}</strong> 条，具体记录如下：</p>
+            </span>
+        </div>
+		<table class="table table-border table-bordered table-bg table-hover table-sort table-responsive">
+			<thead>
+				<tr class="text-c">
+					<th width="30">ID</th>
+                    <th width="150">更新时间</th>
+                    <th width="60">反馈人</th>
+					<th>反馈描述</th>
+					<th width="60">状态更改</th>
+					<th width="60">操作</th>
+				</tr>
+			</thead>
+			<tbody>
+            {% csrf_token %}
+            {% for myfeedback in myfeedbacks %}
+                <tr class="text-c">
+					<td>{{ myfeedback.id }}</td>
+                    <td>{{myfeedback.update_time}}</td>
+                    <td>{{myfeedback.editby.first_name}} &nbsp {{myfeedback.editby.last_name}}</td>
+					<td class="text-l">{{myfeedback.feedback}}</td>
+					<td>{{myfeedback.get_status2be_display}}</td>
+					<td class="f-14 td-manage">
+                        {% csrf_token %}
+                        <a style="text-decoration:none" class="ml-5" onClick="taskfb_reffile('关联文件','../../filemng/rfflist/?rid={{  myfeedback.id }}'+
+                                {% if 0 == mytasktype %}
+                                    '&rmodel=taskfb')" href="javascript:;" title="关联文件"><i class="Hui-iconfont">&#xe687;</i>
+                                {% elif 1 == mytasktype %}
+                                    '&rmodel=taskfb_mng')" href="javascript:;" title="关联文件"><i class="Hui-iconfont">&#xe687;</i>
+                                {% else %}
+                                    '&rmodel=nofund')" href="javascript:;" title="类型未识别"><i class="Hui-iconfont">&#xe636;</i>
+                                {% endif %}
+                                </a>
+                        {% if  request.user.username  == myfeedback.editby.username  %}
+                            {% if 0 == mytasktype %}
+                                <a style="text-decoration:none" class="ml-5" onClick="taskfb_edit('反馈编辑','../fbedit/{{  myfeedback.id }}/',{{  myfeedback.id }})" href="javascript:;" title="编辑"><i class="Hui-iconfont">&#xe6df;</i></a>
+
+                            {% elif 1 == mytasktype %}
+                                <a style="text-decoration:none" class="ml-5" onClick="taskfb_edit('反馈编辑','../fbedit_mng/{{  myfeedback.id }}/',{{  myfeedback.id }})" href="javascript:;" title="编辑mng"><i class="Hui-iconfont">&#xe6df;</i></a>
+                            {% else %}
+                                类型异常
+                            {% endif %}
+                        {% endif %}
+				</tr>
+            {% endfor %}
+            {% if messages %}
+                <script>
+                {% for msg in messages %}
+                    alert('{{ msg.message }}');
+                {% endfor %}
+                </script>
+            {% endif %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<!--_footer 作为公共模版分离出去-->
+
+<script type="text/javascript" src="{% static '/lib/jquery/1.9.1/jquery.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/layer/2.4/layer.js'%}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui/js/H-ui.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui.admin/js/H-ui.admin.js'%}"></script> <!--/_footer /作为公共模版分离出去-->
+
+<!--请在下方写此页面业务相关的脚本-->
+<script type="text/javascript" src="{% static '/lib/My97DatePicker/4.8/WdatePicker.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/jquery.validate.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/validate-methods.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/messages_zh.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/webuploader/0.1.5/webuploader.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/ueditor.config.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/ueditor.all.min.js'%}"> </script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/lang/zh-cn/zh-cn.js'%}"></script>
+<script type="text/javascript">
+$(function(){
+	$('.skin-minimal input').iCheck({
+		checkboxClass: 'icheckbox-blue',
+		radioClass: 'iradio-blue',
+		increaseArea: '20%'
+	});
+	
+	//表单验证
+	$("#form-article-add").validate({
+		rules:{
+			articletitle:{
+				required:true,
+			},
+			articlecolumn:{
+				required:true,
+			},
+			artabstract:{
+				required:true,
+			},
+			sources:{
+				required:true,
+			},
+		},
+		onkeyup:false,
+		focusCleanup:true,
+		success:"valid",
+		submitHandler:function(){
+			//$(form).ajaxSubmit();//系统内嵌在H-ui,js中的函数
+            saveArticle();
+            alert("记录更新成功！" );
+			var index = parent.layer.getFrameIndex(window.name);
+			parent.$("#btn_refresh").click();
+			parent.layer.close(index);
+		}
+	});
+});
+
+/*反馈-编辑*/
+function taskfb_edit(title,url){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+/*基础-页面刷新*/
+function selfrefresh() {
+    location.replace(location.href);
+}
+
+/*==============================================================================
+//打开关联文件清单
+*///============================================================================
+function taskfb_reffile(title,url,obj,myid,mytt) {
+    var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+
+/*==============================================================================
+//检查是否参与任务然后启动反馈添加功能
+*///============================================================================
+function taskfb_add(obj,myid) {
+    //alert("当前测试目的为核实当前用户是否已参与了本任务");
+    //以下是向服务器提交请求和处理返回数据的过程
+    var myty = {{ mytasktype }};
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../refaddfb/",//该函数仅核实当前用户是否是任务参与人
+            {
+                "tid":myid,
+                "tty":myty
+            },
+            function(data,status) {
+                if ("success"==status){
+                    if (data==1){
+                        if(myty==0){
+                           taskfb_edit('添加反馈','../fbadd/?id='+myid);
+                        }
+                        else if (myty==1){
+                           taskfb_edit('添加反馈','../fbadd_mng/?id='+myid);
+                        }
+                        else {
+                           alert("任务类型错误，不能添加反馈！");
+                        }
+
+                    }
+                    else alert("您未参与此项任务，不能添加反馈！"+data);
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+/*==============================================================================
+//更新编辑任务的最新进展，原计划只有任务发起人能够编辑，暂时改为参与人都可以
+*///============================================================================
+function note_change(obj,myid,mytype) {
+    //alert("准备更新进展：\n");
+    var mynew = document.getElementById("taskabstract").value;
+    //alert("取值成功：\n");
+    //alert("当前进展描述：\n"+mynew);
+    //以下是向服务器提交请求和处理返回数据的过程
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../taskupdate/",
+            {
+                "tid":myid,
+                "tty":mytype,
+                "newnote":mynew,
+            },
+            function(data,status) {
+                if ("success"==status){
+                    if (data==1){
+                        alert("任务进展已按您的描述被更新！");
+                    }
+                    else alert("您未参与此项任务，不能添加反馈！"+"\n"+data);
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+</script>
+<!--/请在上方写此页面业务相关的脚本-->
+</body>
+</html>

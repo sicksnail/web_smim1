@@ -1,0 +1,257 @@
+﻿<!DOCTYPE HTML>
+<html>
+{% load static %}
+<!--20181123 对文件参考django规则进行改造 by 任昊-- >
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<!--[if lt IE 9]>
+<script type="text/javascript" src="lib/html5shiv.js"></script>
+<script type="text/javascript" src="lib/respond.min.js"></script>
+<![endif]-->
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui/css/H-ui.min.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/H-ui.admin.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/lib/Hui-iconfont/1.0.8/iconfont.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/skin/default/skin.css' %}" id="skin" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/style.css' %}" />
+<!--[if IE 6]>
+<script type="text/javascript" src="{% static '/lib/DD_belatedPNG_0.0.8a-min.js'%}" ></script>
+<script>DD_belatedPNG.fix('*');</script>
+<![endif]-->
+<title>栏目管理</title>
+</head>
+<body>
+<nav class="breadcrumb"><i class="Hui-iconfont">&#xe639;</i>  栏目管理
+    <button onclick="removeIframe()" class="btn btn-primary radius r"
+            style="line-height:1.6em;margin-top:3px;margin-right:30px">关闭选项卡</button>
+    <a onclick="selfrefresh()" class="btn btn-success radius r" id="btn_refresh"
+       style="line-height:1.6em;margin-top:3px;margin-right:30px" title="刷新" >
+        <i class="Hui-iconfont">&#xe68f;</i>
+    </a>
+</nav>
+<div class="page-container" id="listpage">
+<!--操作控件区：针对任务的编辑操作-------------------------------------------------------------------------->
+	<div class="cl pd-5 bg-1 bk-gray mt-20">
+        <span class="l">
+            <a class="btn btn-primary radius" onClick="category_add('栏目添加','../ctgadd/')" href="javascript:;" >
+                <i class="Hui-iconfont">&#xe600;</i>添加栏目</a>
+        </span>
+        <span class="r">共有数据：<strong>{{ Myctgs.count }}</strong> 条</span> </div>
+<!--表格和数据显示-------------------------------------------------------------------------->
+	<div class="mt-20">
+		<table class="table table-border table-bordered table-bg table-hover table-sort table-responsive">
+			<thead>
+				<tr class="text-c">
+					<th width="25"><input type="checkbox" name="" value=""></th>
+					<th width="30">ID</th>
+					<th width="140">图标（仅父类有效）</th>
+					<th width="120">栏目标题</th>
+					<th width="120">SLUG</th>
+                    <th >栏目名称</th>
+                    <th width="160">父级栏目</th>
+                    <th width="60">栏目级别</th>
+					<th width="60">操作</th>
+				</tr>
+			</thead>
+			<tbody id="listbody">
+            {% csrf_token %}
+            {% for myctg in Myctgs %}
+                <tr class="text-c">
+					<td><input type="checkbox" value="" name=""></td>
+					<td>{{ myctg.id }}</td>
+                    <td>
+                        {% if myctg.useicon %}
+                            <i class="Hui-iconfont">&#xe{{myctg.useicon}};</i>&nbsp;图标编号{{myctg.useicon}}
+                        {% else %}
+                            栏目未指定图标
+                        {% endif %}
+                    </td>
+					<td class="text-l">
+                        <u style="cursor:pointer" class="text-primary" data-title="点击进行编辑"
+                           data-href="../taskmng/task_feedback/?id={{ myctg.id }}"
+                           onclick="Hui_admin_tab(this)" title="查看和反馈">{{myctg.title}}</u></td>
+                    <td>{{ myctg.slug }}</td>
+					<td>{{ myctg.name }}</td>
+                    <td>{{ myctg.parent_category }}</td>
+                    <td>{{ myctg.get_ctgtype_display }}</td>
+					<td class="f-14 td-manage">
+                        <a style="text-decoration:none" class="ml-5" onClick="category_edit('栏目编辑','../ctgedit/{{ myctg.id }}/',{{ myctg.id }})"
+                           href="javascript:;" title="编辑"><i class="Hui-iconfont">&#xe6df;</i></a>
+                        <a style="text-decoration:none" class="ml-5" onClick="category_del(this,{{ myctg.id }})"
+                           href="javascript:;" title="删除"><i class="Hui-iconfont">&#xe609;</i></a>
+                    </td>
+				</tr>
+            {% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+<!--_footer 作为公共模版分离出去-->
+<script type="text/javascript" src="{% static '/lib/jquery/1.9.1/jquery.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/layer/2.4/layer.js' %}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui/js/H-ui.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui.admin/js/H-ui.admin.js' %}"></script> <!--/_footer 作为公共模版分离出去-->
+
+<!--请在下方写此页面业务相关的脚本-->
+<script type="text/javascript" src="{% static '/lib/My97DatePicker/4.8/WdatePicker.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/datatables/1.10.0/jquery.dataTables.min.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/laypage/1.2/laypage.js' %}"></script>
+<script type="text/javascript">
+/*========================================================
+//实现列的排序操作响应，jquery方法
+*///======================================================
+$('.table-sort').dataTable({
+	"aaSorting": [[ 6, "desc" ],[ 4 ]],
+    //默认第几个排序,第一个参数为列的序号，第二个为可选的方向
+	"bStateSave": true,//状态保存
+	"pading":false,
+	"aoColumnDefs": [
+	  //{"bVisible": false, "aTargets": [ 3 ]} //控制列的隐藏显示
+	  {"orderable":false,"aTargets":[0,7]}// 不参与排序的列
+	]
+});
+
+/*=================================================================
+//任务-反馈,实际上是通用的函数，层覆盖调用新页面
+//layer.open+layer.full实现，应该是hui框架的功能
+*///===============================================================
+/*任务-添加*/
+function category_add(title,url,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+/*任务-编辑*/
+function category_edit(title,url,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: url
+	});
+	layer.full(index);
+}
+
+/*基础-页面刷新*/
+function selfrefresh() {
+    location.replace(location.href);
+}
+
+/*==============================================================================
+//筛选清单目前方法仍然是通过ajax向服务器提交
+*///============================================================================
+function querylist_some(myid) {
+    //注意，使用$选择器时，属性需要带括号，使用document.getElementById不带括号;
+    //var myqdesc=document.getElementById("q_taskdesk").value;
+    //alert("myid="+myid+"当前选择的状态值="+mytype+"："+mytype2+",日期范围是="+mydatemin+"至"+mydatemax+",描述关键字为:"+myqdesc+"暂时调试到这里");
+    //以下是向服务器提交请求和处理返回数据的过程
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../listquery/",
+            {
+                "qid":myid,
+                "qtype":mytype,
+                "qdmin":mydatemin,
+                "qdmax":mydatemax,
+                "qdesc":myqdesc
+            },
+            function(data,status) {
+                if ("success"==status){
+                    //alert("服务器反馈：\n"+data+'\n'+"回调状态成功！");
+                    $("#listpage").html(data);
+                    layer.msg('待办任务筛选成功~~',{icon: 6,time:3000});
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+//============================================================================
+function test_newfun(obj,myid) {
+    //alert("当前测试目的为核实当前用户是否已参与了本任务");
+    //以下是向服务器提交请求和处理返回数据的过程
+    var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../newtest/",
+            {
+                "tid":myid,
+            },
+            function(data,status) {
+                if ("success"==status){
+                    alert("服务器反馈：\n"+data+'\n'+"回调成功！");
+                    if (data==1){
+                        alert("您参加了此项任务");
+                        task_feedback('任务查看和反馈','../task_feedback/?id='+myid,myid);
+                    }
+                    else alert("您为参与此项任务，不能进入反馈页面！");
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+}
+
+/*==============================================================================
+//栏目-删除,目前方法仍然是通过ajax向服务器提交，未用deleteview
+*///============================================================================
+function category_del(obj,myid){
+    if (confirm("确认删除吗？")) {
+        var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.post("../ctgdel/",
+            {
+                "cid":myid
+            },
+            function(data,status) {
+                if ("success"==status){
+                    if("1"==data){
+                        alert("服务器消息"+data+'\n'+"栏目删除成功！");
+                        $(obj).parents("tr").remove();
+		                layer.msg('栏目删除成功，建议您将列表页面进行刷新~~',{icon: 6,time:3000});
+                    }
+                    else {
+                        alert("服务器消息"+data+'\n'+"您没有删除栏目的权限！");
+                    }
+                }
+                else alert("服务器消息"+data+'\n'+"回调状态不成功="+status);
+            });
+    }
+    else layer.msg('您已放弃此次删除!',{icon: 6,time:3000});
+}
+
+</script> 
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!--_meta 作为公共模版分离出去-->
+<!DOCTYPE HTML>
+{% load static %}
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<link rel="Bookmark" href="/favicon.ico" >
+<link rel="Shortcut Icon" href="/favicon.ico" />
+<!--[if lt IE 9]>
+<script type="text/javascript" src="{% static '/lib/html5shiv.js' %}"></script>
+<script type="text/javascript" src="{% static '/lib/respond.min.js' %}"></script>
+<![endif]-->
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui/css/H-ui.min.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/H-ui.admin.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/lib/Hui-iconfont/1.0.8/iconfont.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/skin/default/skin.css' %}" id="skin" />
+<link rel="stylesheet" type="text/css" href="{% static '/static/h-ui.admin/css/style.css' %}" />
+<!--[if IE 6]>
+<script type="text/javascript" src="{% static '/lib/DD_belatedPNG_0.0.8a-min.js'%}" ></script>
+<script>DD_belatedPNG.fix('*');</script>
+<![endif]-->
+<!--/meta 作为公共模版分离出去-->
+<style>
+    input[type="text"] {
+        width:99%;
+        display:block;
+        /*margin-left:10px; 可以调整距离外边框值*/
+        /*background-color:whitesmoke; 可以调整背景色*/
+    }
+
+    input[type="number"] {
+        width:99%;
+        display:block;
+        background-color:palegreen;
+    }
+
+    input[type="submit"] {
+        position: absolute;
+        right:50px;
+        margin-top:10px;
+        /*margin-left:10px; 可以调整距离外边框值*/
+        /*background-color:whitesmoke; 可以调整背景色*/
+    }
+
+    select{
+        width:99%;
+        /*display:block; margin-bottom:10px;background-color:whitesmoke;*/
+    }
+
+    label{
+        text-align: center;
+        margin-left:15px;
+    }
+
+    textarea{
+        width:99%;
+    }
+
+    th{
+        width:20%;
+        text-align: center;
+    }
+    td{
+        width:78%;
+    }
+
+</style>
+<title>飞行数据-编辑增加</title>
+</head>
+<body>
+<taskitem class="page-container">
+    {% block content %}
+            <form class="form form-horizontal" id="form-taskitem-addedit" action="" method="post">
+                {% csrf_token %}
+                <table class="table table-border table-bordered table-striped">
+                    <!--form.as_p和form.as_table是两个可用的方案,后者可以自动对齐-->
+                    {{form.as_table}}
+                </table>
+                <table>
+                    <tr>
+                        <th></th>
+                        <td>
+                            <input class="btn radius btn-secondary " type="submit" value="提交" />
+                        </td>
+                    </tr>
+                </table>
+	        </form>
+    {% endblock %}
+</taskitem>
+
+<!--_footer 作为公共模版分离出去-->
+<script type="text/javascript" src="{% static '/lib/jquery/1.9.1/jquery.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/layer/2.4/layer.js'%}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui/js/H-ui.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/static/h-ui.admin/js/H-ui.admin.js'%}"></script> <!--/_footer /作为公共模版分离出去-->
+
+<!--请在下方写此页面业务相关的脚本-->
+<script type="text/javascript" src="{% static '/lib/My97DatePicker/4.8/WdatePicker.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/jquery.validate.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/validate-methods.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/jquery.validation/1.14.0/messages_zh.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/webuploader/0.1.5/webuploader.min.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/ueditor.config.js'%}"></script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/ueditor.all.min.js'%}"> </script>
+<script type="text/javascript" src="{% static '/lib/ueditor/1.4.3/lang/zh-cn/zh-cn.js'%}"></script>
+<script type="text/javascript">
+//===================================================
+//无名函数，jquery响应页面操作，无名函数相当于初始后执行
+//===================================================
+$(function(){
+    //通过识别发起人信息核实是新建还是编辑
+    if ($("#id_sender").val().length<1){
+        //alert("当前是新建，sender无值,设置默认值");
+        $("#id_sender").val("新建无需填写");
+    }
+    //else alert("当前是编辑，sender="+$("#id_sender").val());
+
+	//表单验证-------------------------------------
+    //实际上，本页面的view使用了editview，不调用jquery的validate过程
+	$("#form-article-add").validate({
+		rules:{
+			articletitle:{
+				required:true,
+			},
+			articlecolumn:{
+				required:true,
+			},
+			articletype:{
+				required:true,
+			},
+			articlesort:{
+				required:true,
+			},
+			sources:{
+				required:true,
+			},
+			allowcomments:{
+				required:true,
+			},
+		},
+		onkeyup:false,
+		focusCleanup:true,
+		success:"valid",
+		submitHandler:function(){
+		    //alert("进入了form的validate过程，jquery起作用了");
+			addArticle();
+		}
+	});
+});
+
+//===================================================
+//函数getMeetcode(),在编辑页面新建会议纪要时自动出现新号
+//===================================================
+function getRcdidc() {
+    //alert("已进入getRcdidc");
+    var myacc=document.getElementById("id_airplane");
+    var myaci=myacc.selectedIndex;
+    var myac=myacc.options[myaci].text;//飞机号，从select取值稍微麻烦点
+    var mydate=document.getElementById("id_fltdate").value;//飞行日期
+    var myflt=document.getElementById("id_fltno").value;//航班号
+    var mysta=document.getElementById("id_sta_from").value;//起飞航站
+    var mycode=document.getElementById("id_flt_identity").value+'MM';//现有编号
+    //alert(myac+mydate+myflt+mysta+mycode);
+    if (mycode.length>4){
+        alert("已有记录编号");
+        return;
+    }
+
+    if(myac.length<3){
+        alert("飞机号无效");
+        return;
+    }
+
+    if(mydate.length<3){
+        alert("飞行日期无效");
+        return;
+    }
+
+    if(myflt.length<3){
+        alert("航班号无效");
+        return
+    }
+
+    if(mysta.length<3){
+        alert("起飞航站无效");
+        return
+    }
+    //step1：为post数据提供一个csrfoken以通过验证,固定形式，不求甚解---------
+    var csrftoken = $.cookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    //step2：使用post方法向一个url提交一组数据------------------------------
+    //ajax.post方法的三个参数：目标url，post数据,回调函数
+    $.post("../getfltidentity/",
+    {
+        "myac": myac,
+        "mydate":mydate,
+        "myflt":myflt,
+        "mysta": mysta
+        //"update_time": $("#updatetime").val()
+    },
+    function(data,status) {
+        //因为此处使用了editview，因此不会出现回调
+        if("0"==data){
+            alert('结果为0，您没有编辑飞行记录权限！');
+            return;
+        }
+        if("1"==data){
+            alert('结果为1，已存在该编号，请核实后重新输入！');
+            return;
+        }
+        var mytext=document.getElementById("id_flt_identity");
+        mytext.readonly=false;
+        mytext.value=data;
+        mytext.readonly=true;
+        var myact=document.getElementById("id_airplane");
+        myact.readonly=true;
+        var mydatet=document.getElementById("id_fltdate");//飞行日期
+        mydatet.readOnly=true;
+        var myfltt=document.getElementById("id_fltno");//航班号
+        myfltt.readOnly=true;
+        var mystat=document.getElementById("id_sta_from");//起飞航站
+        mystat.readOnly=true;
+        alert("系统已为您生成飞行记录编号: \n" + data + "\n状态: " + status );
+        //以下是数据更新后更新列表的处理，增删改查后经常需要如此，但有排序筛选时慎用===========
+        //var index = parent.layer.getFrameIndex(window.name);
+        //parent.$("#btn_refresh").click();
+        //parent.layer.close(index);
+        //removeIframe();
+    });
+}
+</script>
+<!--/请在上方写此页面业务相关的脚本-->
+</body>
+</html>

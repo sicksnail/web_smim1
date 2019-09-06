@@ -1,0 +1,113 @@
+﻿<!--div class="page-container" id="listpage">
+<!--操作控件区：快速查询和筛选-------------------------------------------------------------------------->
+	<div class="text-l">
+	 <span class="select-box inline">
+		<select name="st_select123" id="st_select123" class="select" >
+			<option value="-9" {% if Mytype < -5 %} selected {% endif %}>状态筛选</option>
+			<option value="0" {% if Mytype == 0 %} selected {% endif %}>推进中</option>
+			<option value="1" {% if Mytype == 1 %} selected {% endif %}>已完成</option>
+            <option value="2" {% if Mytype == 2 %} selected {% endif %}>已取消</option>
+            <option value="3" {% if Mytype == 3 %} selected {% endif %}>已结束</option>
+            <option value="-3" {% if Mytype == -3 %} selected {% endif %}>未启动</option>
+		</select>
+		</span> 到期范围：
+		<input type="text" onfocus="WdatePicker({ maxDate:'#F{$dp.$D(\'logmax\')||\'%y-%M-%d\'}' })"
+               id="logmin" class="input-text Wdate" style="width:120px;"
+               {% if Mydmin %} value={{ Mydmin }} {% endif %}
+        >
+		-
+		<input type="text" onfocus="WdatePicker({ minDate:'#F{$dp.$D(\'logmin\')}' })"
+               id="logmax" class="input-text Wdate" style="width:120px;"
+               {% if Mydmax %} value={{ Mydmax }} {% endif %}
+        >
+		<input type="text" name="q_taskdesk" id="q_taskdesk" placeholder=" 任务描述" style="width:250px"
+               class="input-text" {% if Mydesc %} value={{ Mydesc }} {% endif %}
+        >
+		<button name="querybtn" id="querybtn" class="btn btn-success" type="button" onclick="querylist_some({{ tasktype }})">
+            <i class="Hui-iconfont">&#xe665;</i> 筛选</button>
+        <button name="allbtn" id="allbtn" class="btn btn-success" type="button" onclick="selfrefresh()"> 全选</button>
+        <button name="minebtn" id="minebtn" class="btn btn-success" type="button" onclick="querylist_mine({{ tasktype }})">
+            <i class="Hui-iconfont">&#xe665;</i> 筛选我的</button>
+    </div>
+<!--操作控件区：针对任务的编辑操作-------------------------------------------------------------------------->
+	<div class="cl pd-5 bg-1 bk-gray mt-20">
+        <span class="l">
+            <a href="javascript:;" onclick="datadel()" class="btn btn-danger radius"><i class="Hui-iconfont">&#xe6e2;</i> 批量删除</a>
+            <!--20181205此处有两种添加记录的配置方法，一种是新建tab适用于连续添加，另一种是图层覆盖适于单个添加-->
+            <!--20190826删除了一个新tab方法-->
+            <a class="btn btn-primary radius" onClick="taskitem_add('项目添加',
+                    '{% if 0 == tasktype %} ../add/'+
+                    '{% elif 1 == tasktype %} ../add_mng/'+
+                    '{% else %} ../nofind/'+'{% endif %}')"
+               href="javascript:;" >
+                <i class="Hui-iconfont">&#xe600;</i>项目添加</a>
+        </span>
+        <span class="r">共有数据：<strong>{{ Mytasks.count }}</strong> 条</span> </div>
+	<div class="mt-20">
+		<table class="table table-border table-bordered table-bg table-hover table-sort table-responsive">
+			<thead>
+				<tr class="text-c">
+					<th width="25"><input type="checkbox" name="" value=""></th>
+					<th width="30">ID</th>
+					<th>任务描述(点击看详情和反馈)</th>
+					<th width="90">期限和状态</th>
+					<th width="120">监控人&参与人</th>
+					<th width="100">最后更新</th>
+                    <th width="60">反馈数</th>
+                    <th width="100">最后反馈</th>
+					<th width="90">操作</th>
+				</tr>
+			</thead>
+			<tbody id="listbody">
+            {% csrf_token %}
+            {% for mytask in Mytasks %}
+                <tr class="text-c">
+					<td><input type="checkbox" value="" name=""></td>
+					<td>{{ mytask.id }}</td>
+					<td class="text-l">
+                        <!--跳转方式：data-title="任务查看和反馈" data-href="../taskmng/task_feedback/?id={{ mytask.id }}" onclick="Hui_admin_tab(this)"-->
+                        <!--覆盖方式：onClick="task_feedback('任务查看和反馈','../task_feedback/?id={{ mytask.id }}',{{ mytask.id }})" title="查看和反馈">-->
+                        <u style="cursor:pointer" class="text-primary" data-title="进展更新和反馈" data-href="../taskmng/task_feedback/?id={{ mytask.id }}&type={{ tasktype }}" onclick="Hui_admin_tab(this)" title="备注说明：{{ mytask.abstract }}">{{mytask.taskdesc}}</u></td>
+					<td>{{mytask.due_date}} <span class="label label-success radius">
+                        {{mytask.get_task_status_display}}</span></td>
+					<td>
+                        {{ mytask.sender }} &
+                        {% for myperson in mytask.refperson.all %}
+                            {{myperson.first_name}}
+                            {{myperson.last_name}},
+                        {% endfor %}
+                    </td>
+					<td>{{mytask.update_time}} by {{mytask.editby.first_name}}{{mytask.editby.last_name}}</td>
+                    <td>{{mytask.taskfeedbacks_set.count}}</td>
+					<td>
+                        {% for mytfb in mytask.taskfeedbacks_set.all %}
+                            {% if forloop.revcounter0 == 0  %}
+                                {{mytfb.update_time}} by
+                                {{mytfb.editby.first_name}}
+                                {{mytfb.editby.last_name}}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td class="f-14 td-manage">
+                        {% csrf_token %}
+                        <!--修改：20190722修改，启用了基于view函数的新方法修改任务参与人-->
+                        <!--a style="text-decoration:none" class="ml-5" onClick="taskitem_edit('编辑任务参与人','../refedit/{{ mytask.id }}/',{{ mytask.id }})" href="javascript:;" title="参与人"><i class="Hui-iconfont">&#xe62b;</i></a-->
+                        {% if mytask.sender == myself or myself == 'all' %}
+                        <a style="text-decoration:none" class="ml-5" onClick="taskitem_edit('项目编辑','../' +
+                                '{% if 0 == tasktype %}edit/'+
+                                '{% elif 1 == tasktype %}edit_mng/'+
+                                '{% else %}nofind/'+'{% endif %}'
+                                +'{{ mytask.id }}/',{{ mytask.id }})" href="javascript:;" title="编辑"><i class="Hui-iconfont">&#xe6df;</i></a>
+                        <a style="text-decoration:none" class="ml-5" onClick="taskitem_del(this,{{ mytask.id }},{{ tasktype }})" href="javascript:;" title="删除"><i class="Hui-iconfont">&#xe6e2;</i></a>
+                        <a style="text-decoration:none" class="ml-5" onClick="taskitem_edit('项目参与人','../refedit/?id={{ mytask.id }}&type={{ tasktype }}',{{ mytask.id }})" href="javascript:;" title="调整参与人"><i class="Hui-iconfont">&#xe62b;</i></a>
+                        {% else %} 管理员和监控人有权编辑
+                        {% endif %}
+                        {% if mytask.sender == myself or myself == 'all' %}
+                            <a style="text-decoration:none" class="ml-5" onClick="taskitem_edit('项目跟踪人（待调试）','../refedit/?id={{ mytask.id }}&type={{ tasktype }}',{{ mytask.id }})" href="javascript:;" title="变更负责人"><i class="Hui-iconfont">&#xe62d;</i></a>
+                        {% endif %}
+                    </td>
+				</tr>
+            {% endfor %}
+			</tbody>
+		</table>
+	</div>
